@@ -131,7 +131,7 @@ namespace Microsoft.Its.Domain.Sql
             // perform a re-entrancy check so that multiple catchups do not try to run concurrently
             if (Interlocked.CompareExchange(ref running, 1, 0) != 0)
             {
-                Debug.WriteLine($"Catchup {Name}: ReadModelCatchup already in progress. Skipping.", ToString());
+                Trace.WriteLine($"[ReadModelCatchup] {Name}: ReadModelCatchup already in progress. Skipping.", ToString());
                 return ReadModelCatchupResult.CatchupAlreadyInProgress;
             }
 
@@ -158,14 +158,14 @@ namespace Microsoft.Its.Domain.Sql
                         CatchupName = Name
                     });
 
-                    Debug.WriteLine(new { query });
+                    Trace.WriteLine(new { query });
 
                     if (query.ExpectedNumberOfEvents == 0)
                     {
                         return ReadModelCatchupResult.CatchupRanButNoNewEvents;
                     }
 
-                    Debug.WriteLine($"Catchup {Name}: Beginning replay of {query.ExpectedNumberOfEvents} events");
+                    Trace.WriteLine($"[ReadModelCatchup] {Name}: Beginning replay of {query.ExpectedNumberOfEvents} events");
 
                     stopwatch.Start();
 
@@ -174,26 +174,21 @@ namespace Microsoft.Its.Domain.Sql
             }
             catch (Exception exception)
             {
-                // TODO: (Run) this should probably throw
-                Trace.WriteLine($"Catchup {Name}: Read model catchup failed after {stopwatch.ElapsedMilliseconds}ms at {eventsProcessed} events.\n{exception}");
+                Trace.WriteLine($"[ReadModelCatchup] {Name}: Read model catchup failed after {stopwatch.ElapsedMilliseconds}ms at {eventsProcessed} events.\n{exception}");
             }
             finally
             {
                 // reset the re-entrancy flag
                 running = 0;
-                Debug.WriteLine($"Catchup {Name}: Catchup batch done.");
+                Trace.WriteLine($"[ReadModelCatchup] {Name}: Catchup batch done.");
             }
 
             stopwatch.Stop();
 
             if (eventsProcessed > 0)
             {
-                Debug.WriteLine(
-                    "Catchup {0}: {1} events projected in {2}ms ({3}ms/event)",
-                    Name,
-                    eventsProcessed,
-                    stopwatch.ElapsedMilliseconds,
-                    (stopwatch.ElapsedMilliseconds/eventsProcessed));
+                Trace.WriteLine(
+                    $"[ReadModelCatchup] {Name}: {eventsProcessed} events projected in {stopwatch.ElapsedMilliseconds}ms ({stopwatch.ElapsedMilliseconds/eventsProcessed}ms/event)");
             }
 
             return ReadModelCatchupResult.CatchupRanAndHandledNewEvents;
@@ -324,7 +319,7 @@ namespace Microsoft.Its.Domain.Sql
             }
             catch (Exception exception)
             {
-                Debug.WriteLine($"Catchup {Name}: Exception while reporting status @ {status}: {exception}");
+                Trace.WriteLine($"Catchup {Name}: Exception while reporting status @ {status}: {exception}");
             }
         }
 
@@ -390,8 +385,6 @@ namespace Microsoft.Its.Domain.Sql
         /// <param name="events">The events.</param>
         public void RunWhen(IObservable<Unit> events)
         {
-            EnsureInitialized();
-
             disposables.Add(events.Subscribe(es => Run().Wait()));
         }
 
@@ -410,7 +403,7 @@ namespace Microsoft.Its.Domain.Sql
                                                      : m)
                                     .ToArray();
 
-            Debug.WriteLine($"Catchup {Name}: Subscribing to event types: {matchEvents.Select(m => m.ToString()).ToJson()}");
+            Trace.WriteLine($"[ReadModelCatchup] {Name}: Subscribing to event types: {matchEvents.Select(m => m.ToString()).ToJson()}");
 
             using (var db = createReadModelDbContext())
             {
