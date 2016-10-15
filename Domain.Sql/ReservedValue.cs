@@ -30,6 +30,10 @@ namespace Microsoft.Its.Domain.Sql
         public ReservedValue Clone() => 
             cloneReservedValue.Value(this);
 
+        /// <summary>Determines whether the specified object is equal to the current object.</summary>
+        /// <returns>true if the specified object  is equal to the current object; otherwise, false.</returns>
+        /// <param name="obj">The object to compare with the current object. </param>
+        /// <filterpriority>2</filterpriority>
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(null, obj))
@@ -71,6 +75,9 @@ namespace Microsoft.Its.Domain.Sql
             return first.Value.Equals(second);
         }
 
+        /// <summary>Serves as the default hash function. </summary>
+        /// <returns>A hash code for the current object.</returns>
+        /// <filterpriority>2</filterpriority>
         public override int GetHashCode()
         {
             unchecked

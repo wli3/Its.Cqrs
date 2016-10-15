@@ -14,6 +14,9 @@ using Microsoft.Its.Domain.Serialization;
 
 namespace Microsoft.Its.Domain.Sql
 {
+    /// <summary>
+    /// Provides methods for working with SQL databases.
+    /// </summary>
     public static class DatabaseExtensions
     {
         /// <summary>

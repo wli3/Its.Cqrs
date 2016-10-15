@@ -1,5 +1,7 @@
+// Copyright (c) Microsoft. All rights reserved. 
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
-using System.Data;
 using System.Data.Entity;
 
 namespace Microsoft.Its.Domain.Sql.Migrations
@@ -41,10 +43,20 @@ namespace Microsoft.Its.Domain.Sql.Migrations
 
         public string ServiceObjective { get; }
 
+        /// <summary>
+        /// Gets the scope within of the migration.
+        /// </summary>
+        /// <remarks>Migrations within one scope are independent of migrations within another scope. Migriation versions are not compared across scopes.</remarks>
         public string MigrationScope => "Service";
 
+        /// <summary>
+        /// Gets the migration version.
+        /// </summary>
         public Version MigrationVersion { get; }
 
+        /// <summary>
+        /// Migrates a database using the specified context.
+        /// </summary>
         public MigrationResult Migrate(DbContext context)
         {
             if (context == null)
