@@ -134,7 +134,10 @@ namespace Microsoft.Its.Domain
             RecordEvent(commandScheduledEvent);
         }
 
-        public void EnactCommand(Annotate<T> command)
+        /// <summary>
+        /// Records an annotation event.
+        /// </summary>
+        internal void EnactCommand(Annotate<T> command)
         {
             RecordEvent(new Annotated<T>(command.Message));
         }
