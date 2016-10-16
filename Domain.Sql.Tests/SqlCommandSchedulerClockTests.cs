@@ -122,38 +122,11 @@ namespace Microsoft.Its.Domain.Sql.Tests
             // act
             await AdvanceClock(TimeSpan.FromDays(2), clockOne.Name);
 
-            //assert
+            //assert 
             deliveryAttempts
                 .Should().HaveCount(1)
                 .And
                 .OnlyContain(c => ((CommandScheduler.Clock) c.Clock).Name == clockOne.Name);
-        }
-
-        [Test]
-        public async Task When_a_command_schedule_another_command_on_custom_clock_the_new_command_is_on_the_same_custom_clock()
-        {
-            // arrange
-            var customClock = CreateClock(Any.CamelCaseName(), Clock.Now());
-
-            var scheduleAttempts = new ConcurrentBag<IScheduledCommand>();
-
-            Configuration.Current.TraceScheduledCommands(command => { scheduleAttempts.Add(command); });
-
-            var target = new CreateCommandTarget(Any.CamelCaseName());
-            await Schedule(
-                target,
-                Clock.Now().AddDays(1),
-                clock: customClock);
-
-            await Schedule(target.Id, new CommandThatScheduleCommand(Any.CamelCaseName()), Clock.Now().AddDays(2), clock: customClock);
-
-            // act
-            await AdvanceClock(TimeSpan.FromDays(4), customClock.Name);
-
-            //assert
-            scheduleAttempts
-                .Should()
-                .OnlyContain(c => ((CommandScheduler.Clock) c.Clock).Name == customClock.Name);
         }
 
         [Test]
