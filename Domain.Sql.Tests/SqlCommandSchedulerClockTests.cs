@@ -153,17 +153,13 @@ namespace Microsoft.Its.Domain.Sql.Tests
 
             //assert
             scheduleAttempts
-              .Should().HaveCount(3)
-              .And
+             .Should()
               .OnlyContain(c => ((CommandScheduler.Clock)c.Clock).Name == clockOne.Name);
 
 
             deliveryAttempts
-                .Should().HaveCount(3)
-                .And
+                .Should()
                 .OnlyContain(c => ((CommandScheduler.Clock) c.Clock).Name == clockOne.Name);
-
-          
         }
 
         [Test]

@@ -122,10 +122,6 @@ namespace Microsoft.Its.Domain.Tests
         public async Task EnactCommand(NonEventSourcedCommandTarget target, CommandThatScheduleCommand command)
         {
             target.CommandsEnacted.Add(command);
-            // await scheduler.Schedule(target.Id, new CommandThatScheduleCommand(target.Id), Clock.Now().AddHours(1));
-            await Configuration
-                .Current.CommandScheduler<NonEventSourcedCommandTarget>()
-                .Schedule(target.Id, new CommandThatScheduleCommand(target.Id), Clock.Now().AddHours(1), clock: Clock.Current);
 
             await Configuration
                 .Current.CommandScheduler<NonEventSourcedCommandTarget>()
