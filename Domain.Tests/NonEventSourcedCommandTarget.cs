@@ -212,7 +212,6 @@ namespace Microsoft.Its.Domain.Tests
         public string ReplierId { get; set; }
     }
 
-
     public class CommandThatScheduleCommand : Command<NonEventSourcedCommandTarget>
     {
         public CommandThatScheduleCommand(
@@ -224,6 +223,4 @@ namespace Microsoft.Its.Domain.Tests
 
         public string SomeId { get; set; }
     }
-
-   
 }

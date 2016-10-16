@@ -122,7 +122,7 @@ namespace Microsoft.Its.Domain.Sql.Tests
             // act
             await AdvanceClock(TimeSpan.FromDays(2), clockOne.Name);
 
-            //assert 
+            //assert
             deliveryAttempts
                 .Should().HaveCount(1)
                 .And
