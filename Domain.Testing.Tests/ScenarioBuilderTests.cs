@@ -7,14 +7,10 @@ using Microsoft.Its.Recipes;
 using NUnit.Framework;
 using Test.Domain.Ordering;
 using System;
-using System.Collections.Concurrent;
 using System.Linq;
 using System.Reactive.Disposables;
 using System.Threading.Tasks;
 using Microsoft.Its.Domain.Sql;
-using Microsoft.Its.Domain.Sql.CommandScheduler;
-using Microsoft.Its.Domain.Tests;
-
 #pragma warning disable 618
 
 namespace Microsoft.Its.Domain.Testing.Tests
@@ -737,55 +733,6 @@ namespace Microsoft.Its.Domain.Testing.Tests
                 }
             }
         }
-
-        //[Test]
-        //public async Task When_a_clock_is_advanced_then_unassociated_commands_are_not_triggered()
-        //{
-        //    // arrange
-        //    var clockOne = CreateClock(Any.CamelCaseName(), Clock.Now());
-        //    var clockTwo = CreateClock(Any.CamelCaseName(), Clock.Now());
-
-        //    var deliveryAttempts = new ConcurrentBag<IScheduledCommand>();
-
-        //    Configuration.Current.TraceScheduledCommands(onDelivering: command => { deliveryAttempts.Add(command); });
-
-        //    await Schedule(
-        //            new CreateCommandTarget(Any.CamelCaseName()),
-        //            Clock.Now().AddDays(1),
-        //            clock: clockOne);
-        //    await Schedule(
-        //            new CreateCommandTarget(Any.CamelCaseName()),
-        //            Clock.Now().AddDays(1),
-        //            clock: clockTwo);
-
-        //    // act
-        //    await AdvanceClock(TimeSpan.FromDays(2), clockOne.Name);
-
-        //    //assert 
-        //    deliveryAttempts
-        //        .Should().HaveCount(1)
-        //        .And
-        //        .OnlyContain(c => ((CommandScheduler.Clock)c.Clock).Name == clockOne.Name);
-        //}
-
-        protected static Sql.CommandScheduler.Clock CreateClock(string named, DateTimeOffset startTime) =>
-           (Sql.CommandScheduler.Clock)Configuration
-                                        .Current
-                                        .SchedulerClockRepository()
-                                        .CreateClock(named, startTime);
-
-        public static Task<SchedulerAdvancedResult> AdvanceClock(
-            TimeSpan by,
-            string clockName ) =>
-                Configuration
-                    .Current
-                    .SchedulerClockTrigger()
-                    .AdvanceClock(
-                        clockName: clockName,
-                        by: by);
-      
-
-      
 
         [Test]
         public async Task Scheduled_commands_in_initial_events_are_not_executed_if_they_become_due_before_Prepare_is_called()
