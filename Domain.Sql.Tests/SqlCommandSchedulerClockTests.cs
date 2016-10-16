@@ -130,36 +130,30 @@ namespace Microsoft.Its.Domain.Sql.Tests
         }
 
         [Test]
-        public async Task when_a_command_schedule_another_command_on_custom_clock_the_new_command_is_on_the_custom_clock_as_well()
+        public async Task When_a_command_schedule_another_command_on_custom_clock_the_new_command_is_on_the_same_custom_clock()
         {
             // arrange
-            var clockOne = CreateClock(Any.CamelCaseName(), Clock.Now());
+            var customClock = CreateClock(Any.CamelCaseName(), Clock.Now());
 
-            var deliveryAttempts = new ConcurrentBag<IScheduledCommand>();
             var scheduleAttempts = new ConcurrentBag<IScheduledCommand>();
 
-            Configuration.Current.TraceScheduledCommands(onDelivering: command => { deliveryAttempts.Add(command); });
-            Configuration.Current.TraceScheduledCommands(onScheduling: command => { scheduleAttempts.Add(command); });
+            Configuration.Current.TraceScheduledCommands(command => { scheduleAttempts.Add(command); });
+
             var target = new CreateCommandTarget(Any.CamelCaseName());
             await Schedule(
                 target,
                 Clock.Now().AddDays(1),
-                clock: clockOne);
+                clock: customClock);
 
-            await Schedule(target.Id, new CommandThatScheduleCommand(Any.CamelCaseName()), Clock.Now().AddDays(2), clock: clockOne);
+            await Schedule(target.Id, new CommandThatScheduleCommand(Any.CamelCaseName()), Clock.Now().AddDays(2), clock: customClock);
 
             // act
-            await AdvanceClock(TimeSpan.FromDays(4), clockOne.Name);
+            await AdvanceClock(TimeSpan.FromDays(4), customClock.Name);
 
             //assert
             scheduleAttempts
-             .Should()
-              .OnlyContain(c => ((CommandScheduler.Clock)c.Clock).Name == clockOne.Name);
-
-
-            deliveryAttempts
                 .Should()
-                .OnlyContain(c => ((CommandScheduler.Clock) c.Clock).Name == clockOne.Name);
+                .OnlyContain(c => ((CommandScheduler.Clock) c.Clock).Name == customClock.Name);
         }
 
         [Test]
