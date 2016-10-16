@@ -75,6 +75,11 @@ namespace Microsoft.Its.Domain
         }
 
         /// <summary>
+        /// The clock of the command who scheduled the command
+        /// </summary>
+        public static IClock ParentClock => CommandContext.Current != null ? CommandContext.Current.ParentClock : current;
+
+        /// <summary>
         /// Creates an <see cref="IClock" /> instance that calls the provided delegate to return the current time.
         /// </summary>
         public static IClock Create(Func<DateTimeOffset> now) => new AnonymousClock(now);

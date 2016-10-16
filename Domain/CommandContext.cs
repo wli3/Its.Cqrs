@@ -44,7 +44,8 @@ namespace Microsoft.Its.Domain
         /// </summary>
         /// <param name="command">The command.</param>
         /// <param name="clock">The clock used by the command and any events that result.</param>
-        public static CommandContext Establish(ICommand command, IClock clock = null)
+        /// <param name="parentClock">The clock of the command who scheduled this command</param>
+        public static CommandContext Establish(ICommand command, IClock clock = null, IClock parentClock = null)
         {
             var current = Current;
 
@@ -53,7 +54,8 @@ namespace Microsoft.Its.Domain
                 current = new CommandContext
                 {
                     // override the domain clock if a clock is provided
-                    Clock = clock ?? Domain.Clock.Current
+                    Clock = clock ?? Domain.Clock.Current,
+                    ParentClock = parentClock
                 };
 
                 CallContext.LogicalSetData(callContextKey, current.Id);
@@ -79,6 +81,11 @@ namespace Microsoft.Its.Domain
         /// Gets or sets the clock used within the command context.
         /// </summary>
         public IClock Clock { get; set; }
+
+        /// <summary>
+        /// Gets the parent clock used within the command context.
+        /// </summary>
+        public IClock ParentClock { get; set; }
 
         /// <summary>
         /// Gets the next etag in a deterministic, repeatable sequence using the specified target token as a seed.

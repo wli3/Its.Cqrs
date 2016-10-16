@@ -130,6 +130,37 @@ namespace Microsoft.Its.Domain.Sql.Tests
         }
 
         [Test]
+        public async Task When_a_command_schedule_another_command_on_custom_clock_the_new_command_is_on_the_same_custom_clock()
+        {
+            // arrange
+            var customClock = CreateClock(Any.CamelCaseName(), Clock.Now());
+            var scheduleAttempts = new ConcurrentBag<IScheduledCommand>();
+            Configuration.Current.TraceScheduledCommands(command => { scheduleAttempts.Add(command); });
+            var target = new CreateCommandTarget(Any.CamelCaseName());
+            await Schedule(
+                target,
+                Clock.Now().AddDays(1),
+                clock: customClock);
+            await Schedule(
+                target.Id,
+                new CommandThatScheduleCommand(
+                    Any.CamelCaseName()),
+                Clock.Now().AddDays(2),
+                clock: customClock);
+
+            // act
+            await AdvanceClock(TimeSpan.FromDays(2), customClock.Name);
+            await AdvanceClock(TimeSpan.FromSeconds(1), customClock.Name);
+            await AdvanceClock(TimeSpan.FromSeconds(1), customClock.Name);
+            await AdvanceClock(TimeSpan.FromSeconds(1), customClock.Name);
+
+            //assert
+            scheduleAttempts
+                .Should()
+                .OnlyContain(c => ((CommandScheduler.Clock) c.Clock).Name == customClock.Name);
+        }
+
+        [Test]
         public override async Task When_a_scheduler_clock_is_advanced_then_the_domain_clock_is_coordinated_to_the_scheduler_clock_for_events_written_as_a_result()
         {
             // arrange

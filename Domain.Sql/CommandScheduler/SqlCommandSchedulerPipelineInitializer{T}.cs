@@ -52,7 +52,8 @@ namespace Microsoft.Its.Domain.Sql.CommandScheduler
                             ? Domain.Clock.Create(() => cmd.DueTime.Value)
                             : cmd.Clock;
 
-            using (CommandContext.Establish(cmd.Command, clock))
+
+            using (CommandContext.Establish(cmd.Command, clock, cmd.Clock))
             {
                 await next(cmd);
 
