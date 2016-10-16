@@ -7,10 +7,14 @@ using Microsoft.Its.Recipes;
 using NUnit.Framework;
 using Test.Domain.Ordering;
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Reactive.Disposables;
 using System.Threading.Tasks;
 using Microsoft.Its.Domain.Sql;
+using Microsoft.Its.Domain.Sql.CommandScheduler;
+using Microsoft.Its.Domain.Tests;
+
 #pragma warning disable 618
 
 namespace Microsoft.Its.Domain.Testing.Tests
@@ -681,6 +685,130 @@ namespace Microsoft.Its.Domain.Testing.Tests
 
                 VirtualClock.Current.AdvanceBy(TimeSpan.FromDays((7*4) + 2));
 
+                await scenario.CommandSchedulerDone();
+
+                account = await scenario.GetLatestAsync<CustomerAccount>();
+
+                // assert
+                account.Events()
+                       .OfType<CommandScheduled<CustomerAccount>>()
+                       .Select(e => e.Timestamp.Date)
+                       .Should()
+                       .BeEquivalentTo(new[]
+                       {
+                           DateTime.Parse("2014-10-08"),
+                           DateTime.Parse("2014-10-15"),
+                           DateTime.Parse("2014-10-22"),
+                           DateTime.Parse("2014-10-29"),
+                           DateTime.Parse("2014-11-05")
+                       });
+                account.Events()
+                       .OfType<CustomerAccount.MarketingEmailSent>()
+                       .Select(e => e.Timestamp.Date)
+                       .Should()
+                       .BeEquivalentTo(new[]
+                       {
+                           DateTime.Parse("2014-10-08"),
+                           DateTime.Parse("2014-10-15"),
+                           DateTime.Parse("2014-10-22"),
+                           DateTime.Parse("2014-10-29"),
+                           DateTime.Parse("2014-11-05")
+                       });
+                account.Events()
+                       .Last()
+                       .Should()
+                       .BeOfType<CommandScheduled<CustomerAccount>>();
+
+                if (UsesSqlStorage)
+                {
+                    using (var db = Configuration.Current.CommandSchedulerDbContext())
+                    {
+                        var scheduledCommands = db.ScheduledCommands
+                                                  .Where(c => c.AggregateId == account.Id)
+                                                  .ToArray();
+
+                        // all but the last command (which didn't come due yet) should have been marked as applied
+                        scheduledCommands
+                            .OrderByDescending(c => c.CreatedTime)
+                            .Skip(1)
+                            .Should()
+                            .OnlyContain(c => c.AppliedTime != null);
+                    }
+                }
+            }
+        }
+
+        //[Test]
+        //public async Task When_a_clock_is_advanced_then_unassociated_commands_are_not_triggered()
+        //{
+        //    // arrange
+        //    var clockOne = CreateClock(Any.CamelCaseName(), Clock.Now());
+        //    var clockTwo = CreateClock(Any.CamelCaseName(), Clock.Now());
+
+        //    var deliveryAttempts = new ConcurrentBag<IScheduledCommand>();
+
+        //    Configuration.Current.TraceScheduledCommands(onDelivering: command => { deliveryAttempts.Add(command); });
+
+        //    await Schedule(
+        //            new CreateCommandTarget(Any.CamelCaseName()),
+        //            Clock.Now().AddDays(1),
+        //            clock: clockOne);
+        //    await Schedule(
+        //            new CreateCommandTarget(Any.CamelCaseName()),
+        //            Clock.Now().AddDays(1),
+        //            clock: clockTwo);
+
+        //    // act
+        //    await AdvanceClock(TimeSpan.FromDays(2), clockOne.Name);
+
+        //    //assert 
+        //    deliveryAttempts
+        //        .Should().HaveCount(1)
+        //        .And
+        //        .OnlyContain(c => ((CommandScheduler.Clock)c.Clock).Name == clockOne.Name);
+        //}
+
+        protected static Sql.CommandScheduler.Clock CreateClock(string named, DateTimeOffset startTime) =>
+           (Sql.CommandScheduler.Clock)Configuration
+                                        .Current
+                                        .SchedulerClockRepository()
+                                        .CreateClock(named, startTime);
+
+        public static Task<SchedulerAdvancedResult> AdvanceClock(
+            TimeSpan by,
+            string clockName ) =>
+                Configuration
+                    .Current
+                    .SchedulerClockTrigger()
+                    .AdvanceClock(
+                        clockName: clockName,
+                        by: by);
+      
+
+        [Test]
+        public async Task Recursive_scheduling_is_supported_when_the_custom_clock_is_advanced()
+        {
+            Configuration.Current.UseSqlEventStore();
+            var clockOne = CreateClock(Any.CamelCaseName(), Clock.Now());
+            // arrange
+            using (VirtualClock.Start(DateTimeOffset.Parse("2014-10-08 06:52:10 AM -07:00")))
+            {
+                Clock.Current = clockOne;
+                var scenario = CreateScenarioBuilder()
+                    .AddEvents(new CustomerAccount.EmailAddressChanged
+                    {
+                        NewEmailAddress = Any.Email()
+                    })
+                    .Prepare();
+
+                // act
+                var account = (await scenario.GetLatestAsync<CustomerAccount>())
+                                      .Apply(new RequestSpam())
+                                      .Apply(new SendMarketingEmail());
+                await scenario.SaveAsync(account);
+
+               // VirtualClock.Current.AdvanceBy(TimeSpan.FromDays((7 * 4) + 2));
+                await AdvanceClock(TimeSpan.FromDays((7 * 4) + 2), clockOne.Name);
                 await scenario.CommandSchedulerDone();
 
                 account = await scenario.GetLatestAsync<CustomerAccount>();

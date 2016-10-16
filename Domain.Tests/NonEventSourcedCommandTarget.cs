@@ -46,7 +46,8 @@ namespace Microsoft.Its.Domain.Tests
         ICommandHandler<NonEventSourcedCommandTarget, TestCommand>,
         ICommandHandler<NonEventSourcedCommandTarget, SendRequests>,
         ICommandHandler<NonEventSourcedCommandTarget, RequestReply>,
-        ICommandHandler<NonEventSourcedCommandTarget, Reply>
+        ICommandHandler<NonEventSourcedCommandTarget, Reply>,
+        ICommandHandler<NonEventSourcedCommandTarget, CommandThatScheduleCommand>
     {
         private readonly ICommandScheduler<NonEventSourcedCommandTarget> scheduler;
 
@@ -114,6 +115,24 @@ namespace Microsoft.Its.Domain.Tests
         }
 
         public async Task HandleScheduledCommandException(NonEventSourcedCommandTarget target, CommandFailed<Reply> command)
+        {
+            target.CommandsFailed.Add(command);
+        }
+
+        public async Task EnactCommand(NonEventSourcedCommandTarget target, CommandThatScheduleCommand command)
+        {
+            target.CommandsEnacted.Add(command);
+            // await scheduler.Schedule(target.Id, new CommandThatScheduleCommand(target.Id), Clock.Now().AddHours(1));
+            await Configuration
+                .Current.CommandScheduler<NonEventSourcedCommandTarget>()
+                .Schedule(target.Id, new CommandThatScheduleCommand(target.Id), Clock.Now().AddHours(1), clock: Clock.Current);
+
+            await Configuration
+                .Current.CommandScheduler<NonEventSourcedCommandTarget>()
+                .Schedule(target.Id, new CommandThatScheduleCommand(target.Id), Clock.Now().AddHours(1));
+        }
+
+        public async Task HandleScheduledCommandException(NonEventSourcedCommandTarget target, CommandFailed<CommandThatScheduleCommand> command)
         {
             target.CommandsFailed.Add(command);
         }
@@ -196,4 +215,19 @@ namespace Microsoft.Its.Domain.Tests
 
         public string ReplierId { get; set; }
     }
+
+
+    public class CommandThatScheduleCommand : Command<NonEventSourcedCommandTarget>
+    {
+        public CommandThatScheduleCommand(
+            string someId,
+            string etag = null) : base(etag)
+        {
+            SomeId = someId;
+        }
+
+        public string SomeId { get; set; }
+    }
+
+   
 }
