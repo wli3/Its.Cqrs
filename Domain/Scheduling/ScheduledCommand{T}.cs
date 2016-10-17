@@ -84,7 +84,7 @@ namespace Microsoft.Its.Domain
             TargetId = targetId;
             DueTime = dueTime ?? Domain.Clock.Current.Now();
             DeliveryPrecondition = deliveryPrecondition;
-            Clock = clock ?? Domain.Clock.WibblyWobbly;
+            Clock = clock ?? Domain.Clock.ParentClock;
 
             this.EnsureCommandHasETag();
         }

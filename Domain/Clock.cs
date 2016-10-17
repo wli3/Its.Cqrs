@@ -75,29 +75,9 @@ namespace Microsoft.Its.Domain
         }
 
         /// <summary>
-        /// wibbly wobbly timey wimey
+        /// The clock of the command who scheduled the command
         /// </summary>
-        /// <exception cref="ArgumentNullException"></exception>
-        public static IClock WibblyWobbly
-        {
-            get
-            {
-                var commandContext = CommandContext.Current;
-                if (commandContext != null)
-                {
-                    return commandContext.AppleSauceClock;
-                }
-                return current;
-            }
-            set
-            {
-                if (value == null)
-                {
-                    throw new ArgumentNullException(nameof(value));
-                }
-                current = value;
-            }
-        }
+        public static IClock ParentClock => CommandContext.Current != null ? CommandContext.Current.ParentClock : current;
 
         /// <summary>
         /// Creates an <see cref="IClock" /> instance that calls the provided delegate to return the current time.

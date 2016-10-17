@@ -149,9 +149,10 @@ namespace Microsoft.Its.Domain.Sql.Tests
                 clock: customClock);
 
             // act
-            await AdvanceClock(TimeSpan.FromDays(1), customClock.Name);
-            await AdvanceClock(TimeSpan.FromDays(1), customClock.Name);
-            await AdvanceClock(TimeSpan.FromDays(1), customClock.Name);
+            await AdvanceClock(TimeSpan.FromDays(2), customClock.Name);
+            await AdvanceClock(TimeSpan.FromSeconds(1), customClock.Name);
+            await AdvanceClock(TimeSpan.FromSeconds(1), customClock.Name);
+            await AdvanceClock(TimeSpan.FromSeconds(1), customClock.Name);
 
             //assert
             scheduleAttempts
