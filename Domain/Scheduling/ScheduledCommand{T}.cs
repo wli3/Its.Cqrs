@@ -82,7 +82,7 @@ namespace Microsoft.Its.Domain
 
             Command = command;
             TargetId = targetId;
-            DueTime = dueTime;
+            DueTime = dueTime ?? Domain.Clock.Current.Now();
             DeliveryPrecondition = deliveryPrecondition;
             Clock = clock ?? Domain.Clock.WibblyWobbly;
 
