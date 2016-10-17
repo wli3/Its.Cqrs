@@ -141,10 +141,17 @@ namespace Microsoft.Its.Domain.Sql.Tests
                 target,
                 Clock.Now().AddDays(1),
                 clock: customClock);
-            await Schedule(target.Id, new CommandThatScheduleCommand(Any.CamelCaseName()), Clock.Now().AddDays(2), clock: customClock);
+            await Schedule(
+                target.Id,
+                new CommandThatScheduleCommand(
+                    Any.CamelCaseName()),
+                Clock.Now().AddDays(2),
+                clock: customClock);
 
             // act
-            await AdvanceClock(TimeSpan.FromDays(4), customClock.Name);
+            await AdvanceClock(TimeSpan.FromDays(1), customClock.Name);
+            await AdvanceClock(TimeSpan.FromDays(1), customClock.Name);
+            await AdvanceClock(TimeSpan.FromDays(1), customClock.Name);
 
             //assert
             scheduleAttempts

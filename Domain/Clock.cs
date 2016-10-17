@@ -75,6 +75,31 @@ namespace Microsoft.Its.Domain
         }
 
         /// <summary>
+        /// wibbly wobbly timey wimey
+        /// </summary>
+        /// <exception cref="ArgumentNullException"></exception>
+        public static IClock WibblyWobbly
+        {
+            get
+            {
+                var commandContext = CommandContext.Current;
+                if (commandContext != null)
+                {
+                    return commandContext.AppleSauceClock;
+                }
+                return current;
+            }
+            set
+            {
+                if (value == null)
+                {
+                    throw new ArgumentNullException(nameof(value));
+                }
+                current = value;
+            }
+        }
+
+        /// <summary>
         /// Creates an <see cref="IClock" /> instance that calls the provided delegate to return the current time.
         /// </summary>
         public static IClock Create(Func<DateTimeOffset> now) => new AnonymousClock(now);
